@@ -20,11 +20,14 @@ def get_gmail_service():
     creds = None
 
     if GMAIL_TOKEN_PATH.exists():
-        creds = Credentials.from_authorized_user_file(GMAIL_TOKEN_PATH, SCOPES)
+        try:
+            creds = Credentials.from_authorized_user_file(GMAIL_TOKEN_PATH, SCOPES)
+            if creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+        except Exception:
+            creds = None
 
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-    elif not creds or not creds.valid:
+    if not creds or not creds.valid:
         flow = InstalledAppFlow.from_client_secrets_file(
             GMAIL_CREDENTIALS_PATH,
             SCOPES,
@@ -51,7 +54,9 @@ def get_gmail_service():
         creds = flow.credentials
 
     if creds:
-        creds.to_json(str(GMAIL_TOKEN_PATH))
+        GMAIL_TOKEN_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(GMAIL_TOKEN_PATH, 'w') as f:
+            f.write(creds.to_json())
 
     from googleapiclient.discovery import build
 
