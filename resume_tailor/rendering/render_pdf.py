@@ -38,10 +38,8 @@ def render_resume_to_pdf(
     html_content = template.render(resume=resume)
 
     if output_path is None:
-        timestamp = datetime.now().strftime("%Y-%m-%d")
-        company_slug = slugify(company_name)
-        job_slug = slugify(job_title)
-        filename = f"{company_slug}-{job_slug}-{timestamp}.pdf"
+        date_formatted = datetime.now().strftime("%B %Y")
+        filename = f"Matthew Pennisi - Resume {date_formatted} ({company_name}).pdf"
         output_path = str(OUTPUT_DIR / filename)
 
     if DEBUG:
