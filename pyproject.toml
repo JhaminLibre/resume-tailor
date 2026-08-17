@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resume-tailor"
+version = "0.1.0"
+description = "Auto-tailor resumes to job postings from LinkedIn job-alert emails"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Matt Pennisi", email = "matt.pennisi@gmail.com"}]
+
+dependencies = [
+    "click>=8.1.0",
+    "pydantic>=2.0.0",
+    "pdfplumber>=0.10.0",
+    "python-docx>=0.8.11",
+    "google-api-python-client>=2.100.0",
+    "google-auth-oauthlib>=1.2.0",
+    "google-auth-httplib2>=0.2.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    "requests>=2.31.0",
+    "trafilatura>=1.6.0",
+    "ddgs>=3.8.0",
+    "anthropic>=0.25.0",
+    "weasyprint>=59.0",
+    "jinja2>=3.1.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+]
+
+[project.scripts]
+resume-tailor = "resume_tailor.cli:main"
