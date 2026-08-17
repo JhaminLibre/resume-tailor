@@ -243,46 +243,21 @@ def open_resume(job_id: int):
 
 @cli.command()
 @click.option(
-    "--threshold",
-    type=int,
-    default=None,
-    help="Match score threshold (0-100). Only scores >= threshold get tailored (default: 70)",
-)
-@click.option(
     "--debug",
     is_flag=True,
     help="Debug mode: parse emails but don't save to database",
 )
-def check(threshold: int, debug: bool):
-    """Check for new LinkedIn job alerts and process them.
+def check(debug: bool):
+    """Check for new LinkedIn job alerts.
 
-    Fetches LinkedIn job-alert emails, evaluates each job against your master resume,
-    and generates tailored PDFs for jobs meeting the match threshold.
+    Fetches LinkedIn job-alert emails and saves them to the database.
+    Use the job-search-analytics skill to score and tailor resumes.
     """
-    from resume_tailor.config import MATCH_THRESHOLD
     from resume_tailor.pipeline import fetch_and_process_alerts
-    from resume_tailor.jd.fetch_jd import resolve_job_description
-    from resume_tailor.matching.evaluate import evaluate_job_match
-    from resume_tailor.tailoring.tailor import tailor_resume_to_job
-    from resume_tailor.rendering.render_pdf import render_resume_to_pdf
-    from resume_tailor.db import (
-        get_master_resume,
-        get_job_by_id,
-        insert_evaluation,
-        insert_tailored_resume,
-    )
-    import sqlite3
-    from resume_tailor.config import DB_PATH
-
-    if threshold is None:
-        threshold = MATCH_THRESHOLD
 
     click.echo("🔄 Checking for new LinkedIn job alerts...")
 
     init_db()
-
-    from resume_tailor.db import get_master_resume_by_role
-    from resume_tailor.matching.detect_role import detect_job_role
 
     summary = fetch_and_process_alerts(debug_mode=debug)
     click.echo(f"✓ Fetched {summary['emails_fetched']} emails, found {summary['jobs_found']} jobs")
@@ -290,88 +265,12 @@ def check(threshold: int, debug: bool):
         for error in summary["errors"]:
             click.echo(f"  ⚠️  {error}")
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT job_id FROM jobs WHERE status = 'new'")
-    new_jobs = cursor.fetchall()
-    conn.close()
+    click.echo(f"\n📊 Summary:")
+    click.echo(f"  New unique jobs: {summary['jobs_new']}")
+    click.echo(f"  Duplicates skipped: {summary['jobs_skipped']}")
 
-    click.echo(f"\n📋 Processing {len(new_jobs)} new jobs...")
-
-    evaluated = 0
-    tailored = 0
-    skipped_low_score = 0
-
-    for (job_id,) in new_jobs:
-        job = get_job_by_id(job_id)
-        if not job:
-            continue
-
-        try:
-            click.echo(f"\n  📌 {job['job_title']} @ {job['company_id']}")
-
-            if not job["full_description"]:
-                conn = sqlite3.connect(DB_PATH)
-                cursor = conn.cursor()
-                cursor.execute("SELECT company_name FROM companies WHERE company_id = ?", (job["company_id"],))
-                company_name = cursor.fetchone()[0]
-                conn.close()
-
-                click.echo("    Fetching full job description...")
-                description, source = resolve_job_description(
-                    job_id,
-                    job["linkedin_url"],
-                    company_name,
-                    job["job_title"],
-                    "",
-                )
-            else:
-                description = job["full_description"]
-
-            detected_role = detect_job_role(job["job_title"], description)
-            master_resume = get_master_resume_by_role(detected_role)
-            if not master_resume:
-                click.echo(f"    ❌ No master resume found for role: {detected_role}")
-                continue
-
-            click.echo("    Evaluating match...")
-            match_result = evaluate_job_match(master_resume, job["job_title"], description)
-            insert_evaluation(job_id, match_result)
-            evaluated += 1
-
-            click.echo(f"    Score: {match_result.match_score}/100")
-
-            if match_result.match_score >= threshold:
-                click.echo("    ✨ Above threshold! Tailoring resume...")
-                tailored_resume = tailor_resume_to_job(master_resume, job["job_title"], description)
-
-                click.echo("    Rendering PDF...")
-                conn = sqlite3.connect(DB_PATH)
-                cursor = conn.cursor()
-                cursor.execute("SELECT company_name FROM companies WHERE company_id = ?", (job["company_id"],))
-                company_name = cursor.fetchone()[0]
-                conn.close()
-
-                pdf_path = render_resume_to_pdf(tailored_resume, company_name, job["job_title"])
-                insert_tailored_resume(job_id, tailored_resume, pdf_path)
-                tailored += 1
-                click.echo(f"    ✅ PDF saved: {pdf_path}")
-            else:
-                click.echo(f"    Score {match_result.match_score} < threshold {threshold}, skipping")
-                skipped_low_score += 1
-
-        except Exception as e:
-            click.echo(f"    ❌ Error: {e}")
-
-    click.echo(f"\n{'='*60}")
-    click.echo(f"Summary:")
-    click.echo(f"  Emails fetched: {summary['emails_fetched']}")
-    click.echo(f"  New jobs: {summary['jobs_new']}")
-    click.echo(f"  Evaluated: {evaluated}")
-    click.echo(f"  Tailored: {tailored}")
-    click.echo(f"  Skipped (low score): {skipped_low_score}")
-    if summary["errors"]:
-        click.echo(f"  Errors: {len(summary['errors'])}")
+    if summary['jobs_new'] > 0:
+        click.echo(f"\n💡 Next step: Run the job-search-analytics skill to score and tailor these jobs")
 
 
 @cli.command()
