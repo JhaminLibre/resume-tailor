@@ -1,0 +1,12 @@
+[Unit]
+Description=Resume Tailor hourly job alert check
+Documentation=https://github.com/JhaminLibre/resume-tailor
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target
