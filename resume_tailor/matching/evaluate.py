@@ -51,7 +51,7 @@ Return ONLY valid JSON matching this structure, no explanation before or after."
 
     message = client.messages.create(
         model="claude-opus-5",
-        max_tokens=1024,
+        max_tokens=2048,
         messages=[
             {
                 "role": "user",
