@@ -70,7 +70,13 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
     jobs = []
 
     job_cards = soup.find_all("td", {"data-test-id": "job-card"})
-    print(f"[DEBUG] Found {len(job_cards)} job cards")
+    print(f"[DEBUG] Found {len(job_cards)} job cards with data-test-id='job-card'")
+
+    if not job_cards:
+        all_tds = soup.find_all("td")
+        print(f"[DEBUG] Total TD elements: {len(all_tds)}")
+        for td in all_tds[:3]:
+            print(f"[DEBUG] Sample TD attrs: {td.attrs}")
 
     for i, card in enumerate(job_cards[:5]):
         title = ""
