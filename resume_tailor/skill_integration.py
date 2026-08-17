@@ -72,7 +72,7 @@ Only return JSON, no other text."""
 
     message = client.messages.create(
         model="claude-opus-5",
-        max_tokens=1024,
+        max_tokens=2048,
         messages=[{"role": "user", "content": prompt}],
     )
 
