@@ -374,6 +374,105 @@ def check(threshold: int, debug: bool):
         click.echo(f"  Errors: {len(summary['errors'])}")
 
 
+@cli.command()
+def evaluate_and_tailor():
+    """Evaluate new jobs and tailor resumes using skill-based approach."""
+    import sqlite3
+    from pathlib import Path
+    from resume_tailor.skill_integration import (
+        read_skill_files,
+        score_job_with_skill,
+        generate_spec_json,
+        build_resume_docx,
+        convert_docx_to_pdf,
+    )
+    from resume_tailor.config import DB_PATH, OUTPUT_DIR
+
+    init_db()
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    click.echo("📊 Loading skill files...")
+    skill_files = read_skill_files()
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT job_id, job_title, full_description FROM jobs WHERE status = 'new' ORDER BY job_id"
+    )
+    new_jobs = cursor.fetchall()
+    conn.close()
+
+    if not new_jobs:
+        click.echo("No new jobs to evaluate.")
+        return
+
+    click.echo(f"\n📋 Evaluating {len(new_jobs)} jobs...")
+
+    tailored = 0
+    strong_fits = 0
+    weak_fits = 0
+
+    for job_id, job_title, job_description in new_jobs:
+        click.echo(f"\n  📌 {job_title} (Job {job_id})")
+
+        try:
+            click.echo("    Scoring...")
+            score_result = score_job_with_skill(job_title, job_description, skill_files)
+
+            tier = score_result["score_tier"]
+            click.echo(f"    Tier: {tier}")
+            click.echo(f"    Reasoning: {score_result['reasoning']}")
+
+            if not score_result.get("should_tailor"):
+                click.echo("    ⊘ Skipping tailoring (not recommended)")
+                continue
+
+            if tier == "Strong fit":
+                strong_fits += 1
+            elif tier == "Weak fit":
+                weak_fits += 1
+
+            click.echo("    Tailoring resume...")
+            spec = generate_spec_json(job_title, job_description, skill_files)
+
+            # Get company name for filename
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT company_name FROM companies WHERE company_id = (SELECT company_id FROM jobs WHERE job_id = ?)",
+                (job_id,),
+            )
+            company_name = cursor.fetchone()[0]
+            conn.close()
+
+            from datetime import datetime
+
+            month_year = datetime.now().strftime("%B %Y")
+            filename = f"Matthew Pennisi - Resume {month_year} ({company_name})"
+            docx_path = str(OUTPUT_DIR / f"{filename}.docx")
+            pdf_path = str(OUTPUT_DIR / f"{filename}.pdf")
+
+            click.echo("    Building DOCX...")
+            build_resume_docx(spec, docx_path)
+
+            click.echo("    Converting to PDF...")
+            convert_docx_to_pdf(docx_path)
+
+            click.echo(f"    ✅ Generated: {Path(docx_path).name}")
+
+            tailored += 1
+
+        except Exception as e:
+            click.echo(f"    ❌ Error: {e}")
+
+    click.echo(f"\n{'='*60}")
+    click.echo(f"Summary:")
+    click.echo(f"  Strong fits: {strong_fits}")
+    click.echo(f"  Weak fits: {weak_fits}")
+    click.echo(f"  Tailored: {tailored}")
+
+
 def main():
     """Entry point for the resume-tailor CLI."""
     cli()
