@@ -28,7 +28,7 @@ def get_gmail_service():
             GMAIL_CREDENTIALS_PATH,
             SCOPES,
         )
-        auth_url, _ = flow.authorization_url(prompt='consent')
+        auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline', redirect_uri='urn:ietf:wg:oauth:2.0:oob')
         print("\n🔐 Google OAuth Authorization Required")
         print("=" * 60)
         print("1. Copy this URL and paste it into your browser:")
