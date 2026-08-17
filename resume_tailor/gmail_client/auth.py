@@ -1,4 +1,5 @@
 import os
+import json
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -10,7 +11,7 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 def get_gmail_service():
     """Get an authenticated Gmail API service.
 
-    On first run, opens a browser for OAuth consent and caches the token.
+    On first run, prompts for manual OAuth code entry and caches the token.
     On subsequent runs, auto-refreshes the cached token.
 
     Returns:
@@ -28,7 +29,24 @@ def get_gmail_service():
             GMAIL_CREDENTIALS_PATH,
             SCOPES,
         )
-        creds = flow.run_local_server(port=0, open_browser=False)
+
+        # Manual OAuth flow for headless/WSL2 environments
+        auth_url, _ = flow.authorization_url(prompt='consent')
+        print("\n" + "="*70)
+        print("🔐 GOOGLE AUTHORIZATION REQUIRED")
+        print("="*70)
+        print("\n1️⃣  Copy this URL and paste into your WINDOWS browser:")
+        print(f"\n   {auth_url}\n")
+        print("2️⃣  Log in with your Gmail account and click 'Allow'")
+        print("3️⃣  You'll be redirected to localhost (will show error)")
+        print("4️⃣  Copy the 'code' parameter from the URL in the address bar")
+        print("   Example: http://localhost/?code=XXXXXXXXXXXX...")
+        print("           Copy everything after 'code='")
+        print("\n5️⃣  Paste the code here: ")
+        print("="*70)
+
+        code = input("Authorization code: ").strip()
+        creds = flow.fetch_token(code=code)
 
     if creds:
         creds.to_json(GMAIL_TOKEN_PATH)
