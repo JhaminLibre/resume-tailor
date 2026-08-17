@@ -95,18 +95,8 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
                 continue
 
             all_links_in_card = card.find_all("a")
-            print(f"[DEBUG] Card {i}: Total links in card: {len(all_links_in_card)}")
-
-            title_link = job_link.find("a", class_=re.compile("font-bold"))
-            if not title_link:
-                title_link = card.find("a", class_=re.compile("font-bold"))
-            print(f"[DEBUG] Card {i}: Found title_link? {title_link is not None}")
-            if title_link:
-                title = title_link.get_text(strip=True)
-                print(f"[DEBUG] Card {i}: Found title: {title}")
-            else:
-                for link in all_links_in_card[1:3]:
-                    print(f"[DEBUG] Card {i}: Sample link text: {link.get_text(strip=True)[:50]}")
+            if len(all_links_in_card) > 2:
+                title = all_links_in_card[1].get_text(strip=True)
 
             paragraphs = card.find_all("p", class_="text-system-gray-100")
             print(f"[DEBUG] Card {i}: Found {len(paragraphs)} paragraphs")
@@ -119,7 +109,6 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
                 else:
                     company = location_text
 
-            print(f"[DEBUG] Card {i}: EXTRACTED title={title}, company={company}, location={location}")
 
         if title and url:
             job = JobCandidate(
