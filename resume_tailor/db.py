@@ -282,6 +282,42 @@ def insert_evaluation(job_id: int, match_result: MatchResult, model_used: str = 
     return evaluation_id
 
 
+def get_job_by_id(job_id: int) -> dict | None:
+    """Retrieve a job by ID.
+
+    Args:
+        job_id: Job ID
+
+    Returns:
+        Job dict or None if not found
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+    SELECT job_id, job_title, company_id, linkedin_url, full_description, full_description_source
+    FROM jobs WHERE job_id = ?
+    """,
+        (job_id,),
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "job_id": row[0],
+        "job_title": row[1],
+        "company_id": row[2],
+        "linkedin_url": row[3],
+        "full_description": row[4],
+        "full_description_source": row[5],
+    }
+
+
 def insert_tailored_resume(job_id: int, resume: Resume, pdf_path: str | None = None) -> int:
     """Insert a tailored resume for a job.
 
