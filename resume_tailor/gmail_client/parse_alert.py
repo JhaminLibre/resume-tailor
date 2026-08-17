@@ -94,27 +94,25 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
             if not url:
                 continue
 
-            inner_table = job_link.find("table")
-            print(f"[DEBUG] Card {i}: Found inner_table? {inner_table is not None}")
+            title_link = job_link.find("a", class_=re.compile("font-bold.*text-md"))
+            if not title_link:
+                title_link = card.find("a", class_=re.compile("font-bold.*text-md"))
+            print(f"[DEBUG] Card {i}: Found title_link? {title_link is not None}")
+            if title_link:
+                title = title_link.get_text(strip=True)
 
-            if inner_table:
-                title_link = inner_table.find("a", class_=re.compile("font-bold.*text-md"))
-                print(f"[DEBUG] Card {i}: Found title_link? {title_link is not None}")
-                if title_link:
-                    title = title_link.get_text(strip=True)
+            paragraphs = card.find_all("p", class_="text-system-gray-100")
+            print(f"[DEBUG] Card {i}: Found {len(paragraphs)} paragraphs")
+            if paragraphs:
+                location_text = paragraphs[0].get_text(strip=True)
+                if "·" in location_text:
+                    parts = location_text.split("·")
+                    company = parts[0].strip()
+                    location = "·".join(parts[1:]).strip()
+                else:
+                    company = location_text
 
-                paragraphs = inner_table.find_all("p", class_="text-system-gray-100")
-                print(f"[DEBUG] Card {i}: Found {len(paragraphs)} paragraphs")
-                if paragraphs:
-                    location_text = paragraphs[0].get_text(strip=True)
-                    if "·" in location_text:
-                        parts = location_text.split("·")
-                        company = parts[0].strip()
-                        location = "·".join(parts[1:]).strip()
-                    else:
-                        company = location_text
-
-                print(f"[DEBUG] Card {i}: EXTRACTED title={title}, company={company}, location={location}")
+            print(f"[DEBUG] Card {i}: EXTRACTED title={title}, company={company}, location={location}")
 
         if title and url:
             job = JobCandidate(
