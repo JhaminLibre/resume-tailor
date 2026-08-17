@@ -73,7 +73,12 @@ def list_resumes():
     default=None,
     help="Match score threshold (0-100). Only scores >= threshold get tailored (default: 70)",
 )
-def check(threshold: int):
+@click.option(
+    "--debug",
+    is_flag=True,
+    help="Debug mode: parse emails but don't save to database",
+)
+def check(threshold: int, debug: bool):
     """Check for new LinkedIn job alerts and process them.
 
     Fetches LinkedIn job-alert emails, evaluates each job against your master resume,
@@ -106,7 +111,7 @@ def check(threshold: int):
         click.echo("❌ No master resume found. Run 'resume-tailor import-resume' first.")
         raise click.Abort()
 
-    summary = fetch_and_process_alerts()
+    summary = fetch_and_process_alerts(debug_mode=debug)
     click.echo(f"✓ Fetched {summary['emails_fetched']} emails, found {summary['jobs_found']} jobs")
     if summary["errors"]:
         for error in summary["errors"]:

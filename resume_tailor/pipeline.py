@@ -41,8 +41,11 @@ def job_exists(linkedin_url: str) -> bool:
     return result is not None
 
 
-def fetch_and_process_alerts() -> dict:
+def fetch_and_process_alerts(debug_mode: bool = False) -> dict:
     """Fetch LinkedIn job alerts from Gmail and insert new jobs into the database.
+
+    Args:
+        debug_mode: If True, parse emails but don't save to database (useful for testing)
 
     Returns:
         Summary dict with keys: emails_fetched, jobs_found, jobs_new, jobs_skipped, errors
@@ -57,6 +60,9 @@ def fetch_and_process_alerts() -> dict:
         "errors": [],
     }
 
+    if debug_mode:
+        print("\n🔧 DEBUG MODE: Parsing emails but NOT saving to database\n")
+
     try:
         emails = fetch_linkedin_alerts(max_results=10)
     except Exception as e:
@@ -68,7 +74,7 @@ def fetch_and_process_alerts() -> dict:
     for email in emails:
         email_id = email["id"]
 
-        if is_email_processed(email_id):
+        if not debug_mode and is_email_processed(email_id):
             continue
 
         try:
@@ -76,21 +82,22 @@ def fetch_and_process_alerts() -> dict:
             summary["jobs_found"] += len(jobs)
 
             for job in jobs:
-                if job_exists(job.linkedin_url):
+                if not debug_mode and job_exists(job.linkedin_url):
                     summary["jobs_skipped"] += 1
                     continue
 
                 try:
-                    company_id = insert_company(job.company, location=job.location)
+                    if not debug_mode:
+                        company_id = insert_company(job.company, location=job.location)
 
-                    job_id = insert_job(
-                        job_title=job.title,
-                        company_id=company_id,
-                        linkedin_url=job.linkedin_url,
-                        snippet=job.snippet,
-                        date_found=email["received_at"],
-                        location=job.location,
-                    )
+                        job_id = insert_job(
+                            job_title=job.title,
+                            company_id=company_id,
+                            linkedin_url=job.linkedin_url,
+                            snippet=job.snippet,
+                            date_found=email["received_at"],
+                            location=job.location,
+                        )
 
                     summary["jobs_new"] += 1
 
@@ -99,7 +106,8 @@ def fetch_and_process_alerts() -> dict:
                         f"Failed to insert job {job.title} @ {job.company}: {e}"
                     )
 
-            mark_email_processed(email_id, email["received_at"], len(jobs))
+            if not debug_mode:
+                mark_email_processed(email_id, email["received_at"], len(jobs))
 
         except Exception as e:
             summary["errors"].append(f"Failed to parse email {email_id}: {e}")
