@@ -47,7 +47,8 @@ def get_gmail_service():
         print("="*70)
 
         code = input("Authorization code: ").strip()
-        creds = flow.fetch_token(code=code)
+        flow.fetch_token(code=code)
+        creds = flow.credentials
 
     if creds:
         creds.to_json(GMAIL_TOKEN_PATH)
