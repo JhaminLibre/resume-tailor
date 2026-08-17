@@ -1,0 +1,11 @@
+[Unit]
+Description=Resume Tailor - Check for LinkedIn job alerts
+Documentation=https://github.com/JhaminLibre/resume-tailor
+
+[Service]
+Type=oneshot
+ExecStart=/home/mpennisi/dev/resume-tailor/.venv/bin/resume-tailor check
+StandardOutput=journal
+StandardError=journal
+Environment="HOME=/home/mpennisi"
+WorkingDirectory=/home/mpennisi/dev/resume-tailor
