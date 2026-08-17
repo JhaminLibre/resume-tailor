@@ -76,7 +76,10 @@ Return ONLY valid JSON matching the Resume schema, no explanation before or afte
         ],
     )
 
-    response_text = message.content[0].text
+    response_text = ""
+    for block in message.content:
+        if hasattr(block, "text"):
+            response_text += block.text
 
     try:
         json_str = response_text

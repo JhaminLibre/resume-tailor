@@ -1,0 +1,12 @@
+Run these 3 commands one at a time to import all master resumes:
+
+1. Strategy & Analytics (Faire):
+resume-tailor import-resume '/mnt/c/Users/mattp/Downloads/Matthew Pennisi - Resume - Aug 2026 (Faire).docx' --role strategy-analytics
+
+2. Product Manager (Broccoli):
+resume-tailor import-resume '/mnt/c/Users/mattp/Downloads/Matthew Pennisi - Resume Aug 2026 (Broccoli).docx' --role pm
+
+3. Analytics Engineer (Cadence):
+resume-tailor import-resume '/mnt/c/Users/mattp/Downloads/Matthew Pennisi - Resume Aug 2026 (Cadence).docx' --role analytics-engineer
+
+After each import, review the structured resume output and confirm it looks correct before saving.
