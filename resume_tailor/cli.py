@@ -197,9 +197,10 @@ def open_resume(job_id: int):
             os.system(f'open "{file_path}"')
             click.echo(f"✅ Opened: {Path(file_path).name}")
         else:
+            import subprocess
             file_path_abs = str(Path(file_path).resolve())
-            windows_path = file_path_abs.replace("/", "\\")
-            os.system(f'explorer.exe /select,"{windows_path}"')
+            windows_path = f"\\\\wsl$\\Ubuntu{file_path_abs.replace('/', chr(92))}"
+            subprocess.Popen(["powershell.exe", "-Command", f"explorer.exe /select,'{windows_path}'"])
             click.echo(f"✅ Opened in Windows Explorer: {Path(file_path).name}")
     except Exception as e:
         click.echo(f"❌ Failed to open file: {e}")
