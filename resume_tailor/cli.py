@@ -189,22 +189,20 @@ def open_resume(job_id: int):
         return
 
     system = platform.system()
-    if system == "Windows":
-        os.startfile(file_path)
-    elif system == "Darwin":
-        os.system(f'open "{file_path}"')
-    else:
-        try:
-            import subprocess
-            file_path_str = str(Path(file_path))
-            if file_path_str.startswith("/"):
-                windows_path = f"\\\\wsl$\\Ubuntu\\{file_path_str[1:].replace('/', chr(92))}"
-            else:
-                windows_path = file_path_str
-            subprocess.run(["explorer.exe", "/select", windows_path], check=False)
+    try:
+        if system == "Windows":
+            os.startfile(file_path)
+            click.echo(f"✅ Opened: {Path(file_path).name}")
+        elif system == "Darwin":
+            os.system(f'open "{file_path}"')
+            click.echo(f"✅ Opened: {Path(file_path).name}")
+        else:
+            file_path_abs = str(Path(file_path).resolve())
+            windows_path = file_path_abs.replace("/", "\\")
+            os.system(f'explorer.exe /select,"{windows_path}"')
             click.echo(f"✅ Opened in Windows Explorer: {Path(file_path).name}")
-        except Exception as e:
-            click.echo(f"❌ Failed to open file: {e}")
+    except Exception as e:
+        click.echo(f"❌ Failed to open file: {e}")
 
 
 @cli.command()
