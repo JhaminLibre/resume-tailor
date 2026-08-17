@@ -51,7 +51,7 @@ def get_gmail_service():
         creds = flow.credentials
 
     if creds:
-        creds.to_json(GMAIL_TOKEN_PATH)
+        creds.to_json(str(GMAIL_TOKEN_PATH))
 
     from googleapiclient.discovery import build
 
