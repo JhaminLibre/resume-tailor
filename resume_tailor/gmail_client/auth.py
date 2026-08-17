@@ -21,17 +21,11 @@ def get_gmail_service():
 
     if GMAIL_TOKEN_PATH.exists():
         try:
-            print(f"[DEBUG] Loading token from {GMAIL_TOKEN_PATH}")
             creds = Credentials.from_authorized_user_file(GMAIL_TOKEN_PATH, SCOPES)
-            print(f"[DEBUG] Token loaded, valid={creds.valid}, expired={creds.expired}")
             if creds.expired and creds.refresh_token:
-                print(f"[DEBUG] Refreshing expired token")
                 creds.refresh(Request())
-        except Exception as e:
-            print(f"[DEBUG] Failed to load token: {e}")
+        except Exception:
             creds = None
-    else:
-        print(f"[DEBUG] Token file does not exist at {GMAIL_TOKEN_PATH}")
 
     if not creds or not creds.valid:
         flow = InstalledAppFlow.from_client_secrets_file(
@@ -63,9 +57,6 @@ def get_gmail_service():
         GMAIL_TOKEN_PATH.parent.mkdir(parents=True, exist_ok=True)
         with open(GMAIL_TOKEN_PATH, 'w') as f:
             f.write(creds.to_json())
-        print(f"[DEBUG] Token saved to {GMAIL_TOKEN_PATH}")
-    else:
-        print(f"[DEBUG] No credentials to save")
 
     from googleapiclient.discovery import build
 
