@@ -66,18 +66,10 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
     Returns:
         List of JobCandidate objects extracted from the email
     """
-    print(f"[DEBUG] parse_linkedin_alert_html called with {len(html)} bytes of HTML")
     soup = BeautifulSoup(html, "lxml")
     jobs = []
 
     job_cards = soup.find_all("td", {"data-test-id": "job-card"})
-    print(f"[DEBUG] Found {len(job_cards)} job cards with data-test-id='job-card'")
-
-    if not job_cards:
-        all_tds = soup.find_all("td")
-        print(f"[DEBUG] Total TD elements: {len(all_tds)}")
-        for td in all_tds[:3]:
-            print(f"[DEBUG] Sample TD attrs: {td.attrs}")
 
     for i, card in enumerate(job_cards[:5]):
         title = ""
@@ -86,11 +78,9 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
         location = ""
 
         job_link = card.find("a", href=re.compile(r"linkedin\.com/comm/jobs/view/\d+"))
-        print(f"[DEBUG] Card {i}: Found job_link? {job_link is not None}")
 
         if job_link:
             url = job_link.get("href", "")
-            print(f"[DEBUG] Card {i}: url={url[:50] if url else 'EMPTY'}...")
             if not url:
                 continue
 
@@ -99,7 +89,6 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
                 title = all_links_in_card[2].get_text(strip=True)
 
             paragraphs = card.find_all("p", class_="text-system-gray-100")
-            print(f"[DEBUG] Card {i}: Found {len(paragraphs)} paragraphs")
             if paragraphs:
                 location_text = paragraphs[0].get_text(strip=True)
                 if "·" in location_text:
@@ -109,8 +98,6 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
                 else:
                     company = location_text
 
-
-        print(f"[DEBUG] Card {i}: Checking - title={bool(title)}, url={bool(url)}")
         if title and url:
             job = JobCandidate(
                 title=title,
@@ -119,7 +106,4 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
                 location=location,
             )
             jobs.append(job)
-            print(f"[DEBUG] Card {i}: ✓ Added job: {title}")
-
-    print(f"[DEBUG] Extracted {len(jobs)} jobs total")
     return jobs
