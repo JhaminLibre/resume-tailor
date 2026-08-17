@@ -29,7 +29,20 @@ def get_gmail_service():
             SCOPES,
             redirect_uri="http://localhost:0",
         )
-        creds = flow.run_local_server(port=0)
+        try:
+            creds = flow.run_local_server(port=0, open_browser=True)
+        except Exception:
+            print("\n⚠️  No browser found. Using console flow instead.")
+            print("1. Go to this URL in your browser:")
+            auth_url, _ = flow.authorization_url(prompt='consent')
+            print(f"   {auth_url}")
+            print("2. Paste the authorization code here:")
+            code = input("Code: ").strip()
+            creds = flow.oauth2session.fetch_token(
+                flow.token_uri,
+                client_secret=flow.client_config['installed']['client_secret'],
+                code=code
+            )
 
     if creds:
         creds.to_json(GMAIL_TOKEN_PATH)
