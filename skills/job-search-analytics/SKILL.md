@@ -17,7 +17,15 @@ before scoring anything — it captures the specific fit lessons learned from
 evaluating his last several roles (seniority mismatches and skill gaps are the
 two things that most often get missed by a naive keyword match).
 
-## Step 1: Search three vectors
+## Integration with resume-tailor
+
+When Matthew runs this skill, use the Python utilities to:
+1. Load new/unapplied jobs from the resume-tailor database (using `skill_bridge.get_new_jobs()`)
+2. After Matthew selects jobs to tailor and applies, mark them as applied in the DB (using `skill_bridge.mark_job_applied(job_id)`)
+
+Skip "Step 1: Search" below — jobs come from resume-tailor's database instead.
+
+## Step 1: Load jobs from resume-tailor database
 
 Always search across all three unless Matthew asks to narrow it:
 - **(a) Analytics Engineer** — "Senior Analytics Engineer," "Analytics Engineer"
