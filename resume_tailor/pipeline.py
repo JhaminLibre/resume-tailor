@@ -83,6 +83,7 @@ def fetch_and_process_alerts(debug_mode: bool = False) -> dict:
 
             for job in jobs:
                 if not debug_mode and job_exists(job.linkedin_url):
+                    print(f"  [SKIPPED] Duplicate: {job.title} @ {job.company}")
                     summary["jobs_skipped"] += 1
                     continue
 
@@ -98,10 +99,12 @@ def fetch_and_process_alerts(debug_mode: bool = False) -> dict:
                             date_found=email["received_at"],
                             location=job.location,
                         )
+                        print(f"  [INSERTED] {job.title} @ {job.company}")
 
                     summary["jobs_new"] += 1
 
                 except Exception as e:
+                    print(f"  [ERROR] {job.title} @ {job.company}: {e}")
                     summary["errors"].append(
                         f"Failed to insert job {job.title} @ {job.company}: {e}"
                     )

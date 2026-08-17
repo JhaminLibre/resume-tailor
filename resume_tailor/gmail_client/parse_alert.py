@@ -44,7 +44,7 @@ def normalize_linkedin_url(url: str) -> str:
 
     job_id = None
     for i, part in enumerate(path_parts):
-        if part == "jobs" and i + 1 < len(path_parts):
+        if part == "view" and i + 1 < len(path_parts):
             job_id = path_parts[i + 1]
             break
 
