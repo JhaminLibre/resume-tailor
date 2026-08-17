@@ -67,6 +67,50 @@ def list_resumes():
 
 
 @cli.command()
+def list_applications():
+    """List all tailored resumes with their job details."""
+    import sqlite3
+    from resume_tailor.config import DB_PATH
+
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            r.file,
+            j.job_title,
+            j.company_id,
+            j.linkedin_url,
+            e.match_score,
+            c.company_name,
+            a.application_status
+        FROM resumes r
+        JOIN applications a ON r.resume_id = a.resume_id
+        JOIN jobs j ON a.job_id = j.job_id
+        JOIN companies c ON j.company_id = c.company_id
+        LEFT JOIN evaluations e ON j.job_id = e.job_id
+        WHERE r.resume_type = 'tailored'
+        ORDER BY r.created_at DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    if not rows:
+        click.echo("No tailored resumes found.")
+        return
+
+    click.echo("📄 Tailored Resumes:")
+    for file, job_title, company_id, linkedin_url, match_score, company_name, status in rows:
+        click.echo(f"\n  📄 {Path(file).name}")
+        click.echo(f"     Job: {job_title} @ {company_name}")
+        click.echo(f"     Score: {match_score}/100")
+        click.echo(f"     Status: {status}")
+        click.echo(f"     URL: {linkedin_url}")
+
+
+@cli.command()
 @click.option(
     "--threshold",
     type=int,
