@@ -111,6 +111,103 @@ def list_applications():
 
 
 @cli.command()
+def active_applications():
+    """List applications in progress (not rejected/accepted)."""
+    import sqlite3
+    from resume_tailor.config import DB_PATH
+
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            a.job_id,
+            r.file,
+            j.job_title,
+            j.linkedin_url,
+            e.match_score,
+            c.company_name,
+            a.application_status
+        FROM applications a
+        JOIN resumes r ON a.resume_id = r.resume_id
+        JOIN jobs j ON a.job_id = j.job_id
+        JOIN companies c ON j.company_id = c.company_id
+        LEFT JOIN evaluations e ON j.job_id = e.job_id
+        WHERE a.application_status IN ('not_applied', 'applied', 'interviewing', 'offer')
+        ORDER BY r.created_at DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    if not rows:
+        click.echo("No active applications.")
+        return
+
+    click.echo("📋 Active Applications (in progress):")
+    for job_id, file, job_title, linkedin_url, match_score, company_name, status in rows:
+        click.echo(f"\n  📄 {Path(file).name}")
+        click.echo(f"     Job: {job_title} @ {company_name}")
+        click.echo(f"     Score: {match_score}/100")
+        click.echo(f"     Status: {status}")
+        click.echo(f"     URL: {linkedin_url}")
+        click.echo(f"     📂 Open: resume-tailor open-resume {job_id}")
+
+
+@cli.command()
+@click.argument("job_id", type=int)
+def open_resume(job_id: int):
+    """Open a resume file in Windows Explorer."""
+    import sqlite3
+    import os
+    import platform
+    from resume_tailor.config import DB_PATH
+
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT r.file
+        FROM resumes r
+        JOIN applications a ON r.resume_id = a.resume_id
+        WHERE a.job_id = ? AND r.resume_type = 'tailored'
+        LIMIT 1
+    """, (job_id,))
+
+    result = cursor.fetchone()
+    conn.close()
+
+    if not result:
+        click.echo(f"❌ No tailored resume found for job {job_id}")
+        return
+
+    file_path = result[0]
+    if not Path(file_path).exists():
+        click.echo(f"❌ Resume file not found: {file_path}")
+        return
+
+    system = platform.system()
+    if system == "Windows":
+        os.startfile(file_path)
+    elif system == "Darwin":
+        os.system(f'open "{file_path}"')
+    else:
+        try:
+            import subprocess
+            file_path_str = str(Path(file_path))
+            if file_path_str.startswith("/"):
+                windows_path = f"\\\\wsl$\\Ubuntu\\{file_path_str[1:].replace('/', chr(92))}"
+            else:
+                windows_path = file_path_str
+            subprocess.run(["explorer.exe", "/select", windows_path], check=False)
+            click.echo(f"✅ Opened in Windows Explorer: {Path(file_path).name}")
+        except Exception as e:
+            click.echo(f"❌ Failed to open file: {e}")
+
+
+@cli.command()
 @click.option(
     "--threshold",
     type=int,
