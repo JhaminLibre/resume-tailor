@@ -70,8 +70,9 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
     jobs = []
 
     job_cards = soup.find_all("td", {"data-test-id": "job-card"})
+    print(f"[DEBUG] Found {len(job_cards)} job cards")
 
-    for card in job_cards[:5]:
+    for i, card in enumerate(job_cards[:5]):
         title = ""
         company = ""
         url = ""
@@ -99,6 +100,8 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
                     else:
                         company = location_text
 
+                print(f"[DEBUG] Card {i}: title={title}, company={company}, location={location}, url={url}")
+
         if title and url:
             job = JobCandidate(
                 title=title,
@@ -108,4 +111,5 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
             )
             jobs.append(job)
 
+    print(f"[DEBUG] Extracted {len(jobs)} jobs total")
     return jobs
