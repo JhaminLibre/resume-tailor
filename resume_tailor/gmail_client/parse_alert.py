@@ -66,6 +66,7 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
     Returns:
         List of JobCandidate objects extracted from the email
     """
+    print(f"[DEBUG] parse_linkedin_alert_html called with {len(html)} bytes of HTML")
     soup = BeautifulSoup(html, "lxml")
     jobs = []
 
