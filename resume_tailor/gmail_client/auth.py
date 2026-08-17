@@ -28,7 +28,17 @@ def get_gmail_service():
             GMAIL_CREDENTIALS_PATH,
             SCOPES,
         )
-        creds = flow.run_local_server(port=0, open_browser=False)
+        auth_url, _ = flow.authorization_url(prompt='consent')
+        print("\n🔐 Google OAuth Authorization Required")
+        print("=" * 60)
+        print("1. Copy this URL and paste it into your browser:")
+        print(f"\n{auth_url}\n")
+        print("2. Log in and approve access")
+        print("3. Copy the authorization code from the URL (after 'code=')")
+        print("4. Paste it here:")
+        print("=" * 60)
+        code = input("Authorization code: ").strip()
+        creds = flow.fetch_token(code=code)
 
     if creds:
         creds.to_json(GMAIL_TOKEN_PATH)
