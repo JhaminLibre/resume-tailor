@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
-from weasyprint import WeasyPrint
+from weasyprint import HTML
 from resume_tailor.models import Resume
 from resume_tailor.config import TEMPLATES_DIR, OUTPUT_DIR, DEBUG
 
@@ -62,7 +62,7 @@ def render_resume_to_pdf(
     """
 
     try:
-        WeasyPrint(string=html_string).write_pdf(output_path)
+        HTML(string=html_string).write_pdf(output_path)
 
         if DEBUG:
             print(f"[DEBUG] PDF generated successfully: {output_path}")
