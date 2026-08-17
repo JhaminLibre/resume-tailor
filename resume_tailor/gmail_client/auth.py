@@ -28,10 +28,11 @@ def get_gmail_service():
         flow = InstalledAppFlow.from_client_secrets_file(
             GMAIL_CREDENTIALS_PATH,
             SCOPES,
+            redirect_uri='urn:ietf:wg:oauth:2.0:oob',
         )
 
         # Manual OAuth flow for headless/WSL2 environments
-        auth_url, _ = flow.authorization_url(prompt='consent', redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+        auth_url, _ = flow.authorization_url(prompt='consent')
         print("\n" + "="*70)
         print("🔐 GOOGLE AUTHORIZATION REQUIRED")
         print("="*70)
