@@ -95,10 +95,8 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
                 continue
 
             all_links_in_card = card.find_all("a")
-            print(f"[DEBUG] Card {i}: Links: {[link.get_text(strip=True)[:30] for link in all_links_in_card]}")
             if len(all_links_in_card) > 2:
-                title = all_links_in_card[1].get_text(strip=True)
-                print(f"[DEBUG] Card {i}: Extracted title from link[1]: '{title}'")
+                title = all_links_in_card[2].get_text(strip=True)
 
             paragraphs = card.find_all("p", class_="text-system-gray-100")
             print(f"[DEBUG] Card {i}: Found {len(paragraphs)} paragraphs")
