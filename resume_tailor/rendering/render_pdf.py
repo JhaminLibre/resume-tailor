@@ -65,6 +65,25 @@ def render_resume_to_pdf(
         if DEBUG:
             print(f"[DEBUG] PDF generated successfully: {output_path}")
 
+        try:
+            import pypdf
+
+            reader = pypdf.PdfReader(output_path)
+            page_count = len(reader.pages)
+
+            if page_count > 1:
+                raise RuntimeError(
+                    f"❌ Resume is {page_count} pages, but must fit on 1 page. "
+                    "Ensure Claude only reordered content without adding new sections."
+                )
+
+            if DEBUG:
+                print(f"[DEBUG] Resume is {page_count} page ✓")
+
+        except ImportError:
+            if DEBUG:
+                print("[DEBUG] pypdf not available for page count validation (skipped)")
+
         return output_path
 
     except Exception as e:

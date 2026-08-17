@@ -1,7 +1,7 @@
 import json
 import click
 from pathlib import Path
-from resume_tailor.db import init_db, insert_master_resume, get_master_resume
+from resume_tailor.db import init_db, insert_master_resume, get_master_resume, get_master_resume_by_role
 from resume_tailor.importer.extract_text import extract_text
 from resume_tailor.importer.structure_resume import structure_resume_with_claude
 from resume_tailor.config import MASTER_RESUME_PATH
@@ -15,7 +15,13 @@ def cli():
 
 @cli.command()
 @click.argument("resume_file", type=click.Path(exists=True))
-def import_resume(resume_file: str):
+@click.option(
+    "--role",
+    type=click.Choice(["strategy-analytics", "pm", "analytics-engineer"]),
+    default=None,
+    help="Role tag for this master resume (optional)",
+)
+def import_resume(resume_file: str, role: str | None):
     """Import and structure a resume from a PDF or DOCX file.
 
     Extracts text, uses Claude to structure it, and asks for your review before saving.
@@ -40,8 +46,9 @@ def import_resume(resume_file: str):
         if click.confirm("Does this look correct? Save to database?"):
             init_db()
             source_files = [str(Path(resume_file).resolve())]
-            resume_id = insert_master_resume(resume, source_files)
-            click.echo(f"✓ Master resume saved (ID: {resume_id})")
+            resume_id = insert_master_resume(resume, source_files, role=role)
+            role_label = f" ({role})" if role else ""
+            click.echo(f"✓ Master resume saved{role_label} (ID: {resume_id})")
             click.echo(f"📁 Resume JSON can be edited at: {MASTER_RESUME_PATH}")
         else:
             click.echo("Cancelled. Resume not saved.")
@@ -246,10 +253,8 @@ def check(threshold: int, debug: bool):
 
     init_db()
 
-    master_resume = get_master_resume()
-    if not master_resume:
-        click.echo("❌ No master resume found. Run 'resume-tailor import-resume' first.")
-        raise click.Abort()
+    from resume_tailor.db import get_master_resume_by_role
+    from resume_tailor.matching.detect_role import detect_job_role
 
     summary = fetch_and_process_alerts(debug_mode=debug)
     click.echo(f"✓ Fetched {summary['emails_fetched']} emails, found {summary['jobs_found']} jobs")
@@ -294,6 +299,12 @@ def check(threshold: int, debug: bool):
                 )
             else:
                 description = job["full_description"]
+
+            detected_role = detect_job_role(job["job_title"], description)
+            master_resume = get_master_resume_by_role(detected_role)
+            if not master_resume:
+                click.echo(f"    ❌ No master resume found for role: {detected_role}")
+                continue
 
             click.echo("    Evaluating match...")
             match_result = evaluate_job_match(master_resume, job["job_title"], description)

@@ -82,6 +82,7 @@ def init_db():
         resume_id INTEGER PRIMARY KEY AUTOINCREMENT,
         resume_name TEXT NOT NULL,
         resume_type TEXT NOT NULL CHECK (resume_type IN ('master','tailored')),
+        role TEXT CHECK (role IN ('strategy-analytics', 'pm', 'analytics-engineer', NULL)),
         job_id INTEGER REFERENCES jobs(job_id),
         content_json TEXT NOT NULL,
         file TEXT,
@@ -113,12 +114,13 @@ def init_db():
     conn.close()
 
 
-def insert_master_resume(resume: Resume, source_files: list[str]) -> int:
+def insert_master_resume(resume: Resume, source_files: list[str], role: str | None = None) -> int:
     """Insert a master resume into the database.
 
     Args:
         resume: Resume object
         source_files: List of source file paths used to create the resume
+        role: Optional role tag ('strategy-analytics', 'pm', 'data-engineer')
 
     Returns:
         The resume_id of the inserted resume
@@ -130,10 +132,10 @@ def insert_master_resume(resume: Resume, source_files: list[str]) -> int:
 
     cursor.execute(
         """
-    INSERT INTO resumes (resume_name, resume_type, job_id, content_json, created_at)
-    VALUES (?, ?, ?, ?, datetime('now'))
+    INSERT INTO resumes (resume_name, resume_type, role, job_id, content_json, created_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
     """,
-        ("master", "master", None, content_json),
+        ("master", "master", role, None, content_json),
     )
 
     resume_id = cursor.lastrowid
@@ -159,6 +161,38 @@ def get_master_resume() -> Resume | None:
     ORDER BY created_at DESC
     LIMIT 1
     """
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    resume_dict = json.loads(row[0])
+    return Resume(**resume_dict)
+
+
+def get_master_resume_by_role(role: str) -> Resume | None:
+    """Retrieve a master resume by role.
+
+    Args:
+        role: Role tag ('strategy-analytics', 'pm', 'data-engineer')
+
+    Returns:
+        Resume object if found, None otherwise
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+    SELECT content_json FROM resumes
+    WHERE resume_type = 'master' AND role = ?
+    ORDER BY created_at DESC
+    LIMIT 1
+    """,
+        (role,),
     )
 
     row = cursor.fetchone()

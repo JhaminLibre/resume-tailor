@@ -37,21 +37,28 @@ Description:
 
 Your task: Tailor the master resume to this specific job while maintaining the same JSON structure.
 
-Guidelines:
-1. Reorder experience bullets to highlight the most relevant ones first
-2. Emphasize achievements and skills that match the job requirements
-3. Adjust the professional summary to reflect alignment with the role
-4. Reorder skills and certifications to prioritize relevant ones
-5. Keep all core information (names, dates, institutions) the same
-6. Do NOT add fake experience or credentials
-7. Do NOT remove important information
-8. Keep the same Resume JSON schema structure
+CRITICAL CONSTRAINTS - Do NOT violate these:
+1. ONLY change the professional summary to highlight relevant experience
+2. ONLY reorder existing bullets/skills/experience - do NOT add new ones
+3. ONLY reorder which skills appear first - do NOT add new skills
+4. Do NOT add any new roles, projects, education, or sections
+5. Do NOT modify dates, company names, institution names, or any factual information
+6. Do NOT remove any sections or bullets
+7. Keep the exact same number of bullets in each role
+8. Keep the exact same number of skills and items in each section
+9. The file must fit on 1 page - do not add content that increases length
+
+Your ONLY actions:
+- Rewrite the summary to emphasize relevant experience for this job
+- Reorder bullets within each experience entry (no new bullets)
+- Reorder skills to prioritize relevant ones first (no new skills)
+- Reorder education/certifications if relevant
 
 Return a tailored Resume JSON object that:
 - Has the exact same schema as the input
 - Emphasizes the candidate's best fit for this specific job
 - Still accurately represents the candidate (no fabrication)
-- Reorders/reemphasizes content from the master resume
+- Only reorders/reemphasizes content from the master resume
 
 Return ONLY valid JSON matching the Resume schema, no explanation before or after."""
 
