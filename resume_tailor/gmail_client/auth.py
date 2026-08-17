@@ -28,7 +28,7 @@ def get_gmail_service():
         flow = InstalledAppFlow.from_client_secrets_file(
             GMAIL_CREDENTIALS_PATH,
             SCOPES,
-            redirect_uri='urn:ietf:wg:oauth:2.0:oob',
+            redirect_uri='http://localhost/',
         )
 
         # Manual OAuth flow for headless/WSL2 environments
