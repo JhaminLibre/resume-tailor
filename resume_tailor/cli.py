@@ -164,6 +164,32 @@ def active_applications():
 
 @cli.command()
 @click.argument("job_id", type=int)
+def mark_applied(job_id: int):
+    """Mark an application as applied."""
+    import sqlite3
+    from resume_tailor.config import DB_PATH
+
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE applications
+        SET application_status = 'applied', updated_at = datetime('now')
+        WHERE job_id = ?
+    """, (job_id,))
+
+    if cursor.rowcount == 0:
+        click.echo(f"❌ Application not found for job {job_id}")
+    else:
+        click.echo(f"✅ Marked job {job_id} as applied")
+
+    conn.commit()
+    conn.close()
+
+
+@cli.command()
+@click.argument("job_id", type=int)
 def open_resume(job_id: int):
     """Open a resume file in Windows Explorer."""
     import sqlite3
