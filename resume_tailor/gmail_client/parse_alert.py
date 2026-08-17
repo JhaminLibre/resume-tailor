@@ -110,6 +110,7 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
                     company = location_text
 
 
+        print(f"[DEBUG] Card {i}: Checking - title={bool(title)}, url={bool(url)}")
         if title and url:
             job = JobCandidate(
                 title=title,
@@ -118,6 +119,7 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
                 location=location,
             )
             jobs.append(job)
+            print(f"[DEBUG] Card {i}: ✓ Added job: {title}")
 
     print(f"[DEBUG] Extracted {len(jobs)} jobs total")
     return jobs
