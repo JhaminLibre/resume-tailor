@@ -140,7 +140,9 @@ def active_applications():
         JOIN resumes r ON a.resume_id = r.resume_id
         JOIN jobs j ON a.job_id = j.job_id
         JOIN companies c ON j.company_id = c.company_id
-        LEFT JOIN evaluations e ON j.job_id = e.job_id
+        LEFT JOIN evaluations e ON j.job_id = e.job_id AND e.evaluation_id = (
+            SELECT evaluation_id FROM evaluations WHERE job_id = j.job_id ORDER BY evaluated_at DESC LIMIT 1
+        )
         WHERE a.application_status IN ('not_applied', 'applied', 'interviewing', 'offer')
         ORDER BY r.created_at DESC
     """)
