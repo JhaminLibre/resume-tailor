@@ -14,7 +14,7 @@ def fetch_linkedin_alerts(max_results: int = 10) -> list[dict]:
     require_gmail_credentials()
     service = get_gmail_service()
 
-    query = 'from:jobalerts-noreply@linkedin.com (-subject:"your job alert") newer_than:2d'
+    query = 'from:jobalerts-noreply@linkedin.com newer_than:2d'
 
     results = service.users().messages().list(userId="me", q=query, maxResults=max_results).execute()
 
