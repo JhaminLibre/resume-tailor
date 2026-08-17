@@ -2,6 +2,12 @@
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["resume_tailor"]
+
+[tool.setuptools.package-data]
+resume_tailor = ["rendering/templates/*"]
+
 [project]
 name = "resume-tailor"
 version = "0.1.0"
