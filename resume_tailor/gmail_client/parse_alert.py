@@ -69,51 +69,41 @@ def parse_linkedin_alert_html(html: str) -> list[JobCandidate]:
     soup = BeautifulSoup(html, "lxml")
     jobs = []
 
-    job_elements = soup.find_all("td", {"data-test-id": re.compile("job-card-container")})
+    job_cards = soup.find_all("td", {"data-test-id": "job-card"})
 
-    if not job_elements:
-        job_elements = soup.find_all(class_=re.compile("job-card|job-item", re.IGNORECASE))
-
-    if not job_elements:
-        job_elements = soup.find_all(href=re.compile(r"linkedin\.com/jobs/view"))
-
-    for elem in job_elements[:5]:
+    for card in job_cards[:5]:
         title = ""
         company = ""
         url = ""
-        snippet = ""
         location = ""
 
-        title_elem = elem.find(class_=re.compile("job-title|title", re.IGNORECASE))
-        if not title_elem:
-            title_elem = elem.find("a", href=re.compile(r"linkedin\.com/jobs"))
-        if title_elem:
-            title = title_elem.get_text(strip=True)
+        job_link = card.find("a", href=re.compile(r"linkedin\.com/comm/jobs/view/\d+"))
+        if job_link:
+            url = job_link.get("href", "")
+            if not url:
+                continue
 
-        company_elem = elem.find(class_=re.compile("company|company-name", re.IGNORECASE))
-        if not company_elem:
-            company_elem = elem.find(string=re.compile(r"@|Company"))
-        if company_elem:
-            company = company_elem.get_text(strip=True)
+            inner_table = job_link.find("table")
+            if inner_table:
+                title_link = inner_table.find("a", class_=re.compile("font-bold.*text-md"))
+                if title_link:
+                    title = title_link.get_text(strip=True)
 
-        url_elem = elem.find("a", href=re.compile(r"linkedin\.com/jobs/view/\d+"))
-        if url_elem and url_elem.get("href"):
-            url = url_elem["href"]
-
-        snippet_elem = elem.find(class_=re.compile("snippet|description", re.IGNORECASE))
-        if snippet_elem:
-            snippet = snippet_elem.get_text(strip=True)
-
-        location_elem = elem.find(class_=re.compile("location", re.IGNORECASE))
-        if location_elem:
-            location = location_elem.get_text(strip=True)
+                paragraphs = inner_table.find_all("p", class_="text-system-gray-100")
+                if paragraphs:
+                    location_text = paragraphs[0].get_text(strip=True)
+                    if "·" in location_text:
+                        parts = location_text.split("·")
+                        company = parts[0].strip()
+                        location = "·".join(parts[1:]).strip()
+                    else:
+                        company = location_text
 
         if title and url:
             job = JobCandidate(
                 title=title,
                 company=company or "Unknown Company",
                 linkedin_url=url,
-                snippet=snippet,
                 location=location,
             )
             jobs.append(job)
