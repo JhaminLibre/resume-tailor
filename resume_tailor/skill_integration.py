@@ -136,7 +136,7 @@ CRITICAL: Keep ALL 6 roles and ALL bullets from master resume. Only reorder, nev
 
     message = client.messages.create(
         model="claude-opus-5",
-        max_tokens=2048,
+        max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
 
